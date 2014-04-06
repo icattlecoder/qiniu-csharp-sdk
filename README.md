@@ -62,6 +62,73 @@ UploadBlockFailed;       	| 上传块失败
 ## 文件操作
 简单的实现了文件的基本信息获取及删除操作，分别为`Stat`和`Delete`
 
+# 完整示例
+
+```
+using System;
+using qiniu;
+using System.Threading;
+
+namespace demo
+{
+	class MainClass
+	{
+		public static void Main (string[] args)
+		{
+			// 初始化qiniu配置，主要是API Keys
+			qiniu.Config.ACCESS_KEY = "IT9iP3J9wdXXYsT1p8ns0gWD-CQOdLvIQuyE0FOi";
+			qiniu.Config.SECRET_KEY = "zUCzekBtEqTZ4-WJPCGlBrr2PeyYxsYn98LxaivM";
+
+			/**********************************************************************
+			可以用下面的方法从配置文件中初始化
+			qiniu.Config.InitFromAppConfig ();
+			**********************************************************************/
+
+			//==========================上传文件=========================================
+			{
+				QiniuFile qfile = new QiniuFile ("<input your bucket name>", "<input qiniu file key>", "<local disk file path");
+				ManualResetEvent done = new ManualResetEvent (false);
+				//上传完成事件
+				qfile.UploadCompleted += (sender, e) => {
+					Console.WriteLine (e.RawString);
+					done.Set ();
+				};
+				//上传失败事件
+				qfile.UploadFailed += (sender, e) => {
+					Console.WriteLine (e.Error.ToString ());
+					done.Set ();
+				};
+				//上传进度事件，可用于百分比进度显示，网速计算
+				qfile.UploadProgressChanged += (sender, e) => {
+					int percentage = (int)(100 * e.BytesSent / e.TotalBytes);
+					Console.Write (percentage);
+				};
+				// 上传为异步操作
+				// 上传本地文件到七牛云存储
+				qfile.Upload ();
+				done.WaitOne ();
+			}
+
+			//======================================================================
+			{
+
+				try {
+					QiniuFile qfile = new QiniuFile ("<input your bucket Name>", "<input qiniu file key>");
+					QiniuFileInfo finfo = qfile.Stat ();
+					if (finfo != null) {
+						//删除七牛云空间的文件
+						qfile.Delete ();
+					}
+				} catch (QiniuWebException e) {
+					Console.WriteLine (e.Error.HttpCode);
+					Console.WriteLine (e.Error.ToString ());
+				}
+			}
+		}	
+	}	
+}
+```
+
 <a id="issue"></a>
 # 问题反馈
 [https://github.com/icattlecoder/qiniu-csharp-sdk/issues/new](https://github.com/icattlecoder/qiniu-csharp-sdk/issues/new)
