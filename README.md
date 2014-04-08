@@ -64,7 +64,7 @@ UploadBlockFailed;       	| 上传块失败
 
 # 完整示例
 
-```
+```c#
 using System;
 using qiniu;
 using System.Threading;
