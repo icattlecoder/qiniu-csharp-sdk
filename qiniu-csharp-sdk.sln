@@ -21,6 +21,6 @@ Global
 		{8D120ACA-4BF9-42A7-81C6-8BE39FF5ED42}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = qiniu.csproj
+		StartupItem = demo\demo.csproj
 	EndGlobalSection
 EndGlobal

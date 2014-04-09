@@ -228,20 +228,20 @@ namespace qiniu
 		/// Uploads the big file ( > 8MB ).
 		/// </summary>
 		/// <param name="token">Token.</param>
-		private void uploadBigFile(string token,BlkputRet[] blkRets=null){
+		private void uploadBigFile(string token,BlkputRet[] puttedBlk=null){
 			uploading = true;
 			Action a = () => {
 				FileInfo finfo = new FileInfo (this.localfile);
 				int blockcount = block_count (finfo.Length);
-				if (blkRets == null) {
-					blkRets = new BlkputRet[blockcount];
-				}
+
+				BlkputRet []blkRets = new BlkputRet[blockcount];
 				using (FileStream fs = File.OpenRead (this.localfile)) {
 					long totalSent = 0;
 					int readLen = BLOCKSIZE;
 					byte[] buf = new byte[readLen];
 					for (int i = 0; i < blockcount; i++) {
-						if (blkRets [i] != null) {
+						if (puttedBlk!=null&&i< puttedBlk.Length) {
+							blkRets[i] = puttedBlk[i];
 							continue;
 						}
 						if (i == blockcount - 1) {
