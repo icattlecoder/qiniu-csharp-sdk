@@ -11,6 +11,7 @@ qiniu-csharp-sdk
 - [上传文件](#upload)
 	- [上传事件](#event)
 	- [上传结果](#result)
+	- [续传](#resumble)
 - [文件操作](#rsop)
 	- [查看信息](#stat)
 	- [删除](#delete)
@@ -52,11 +53,15 @@ UploadProgressChanged;      | 上传进度
 UploadBlockCompleted;       | 上传块完成
 UploadBlockFailed;       	| 上传块失败
 
-前三个事件比较容易理解，后两个事件是根据七牛的大文件上传机制衍生出来的，合理利用这两个事件可以完成大文件分块上传结果持久化。
+前三个事件比较容易理解，后两个事件是根据七牛的大文件上传机制衍生出来的，合理利用这两个事件可以完成大文件分块上传结果持久化，从而实现续传。
 
 <a id="result"></a>
 ## 上传结果
 成功上传一个文件后，结果通过事件`uploadCompleted`获取得到，包括文件的`Hash`和`Key`以及从七牛云存储返回的原始字符串（主要考虑到上传凭证中指定了自定义的returnBody）。
+
+## 续传
+
+类`QiniuResumbleUploadEx`可用于续传，见示例。
 
 <a id="rsop"></a>
 ## 文件操作
@@ -66,6 +71,8 @@ UploadBlockFailed;       	| 上传块失败
 
 ```c#
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using qiniu;
 using System.Threading;
 
@@ -77,35 +84,54 @@ namespace demo
 		{
 			// 初始化qiniu配置，主要是API Keys
 			qiniu.Config.ACCESS_KEY = "IT9iP3J9wdXXYsT1p8ns0gWD-CQOdLvIQuyE0FOi";
-			qiniu.Config.SECRET_KEY = "zUCzekBtEqTZ4-WJPCGlBrr2PeyYxsYn98LxaivM";
+			qiniu.Config.SECRET_KEY = "zUCzekBtEqTZ4-WJPCGlBrr2PeyYxsYn98LPaivM";
 
 			/**********************************************************************
 			可以用下面的方法从配置文件中初始化
 			qiniu.Config.InitFromAppConfig ();
 			**********************************************************************/
 
-			//==========================上传文件=========================================
+			string localfile = "/Users/icattlecoder/Movies/tzd.rmvb";
+			string bucket = "icattlecoder";
+			string qiniukey = "tzd.rmvb";
+			
+			//======================================================================
 			{
-				QiniuFile qfile = new QiniuFile ("<input your bucket name>", "<input qiniu file key>", "<local disk file path");
+				QiniuFile qfile = new QiniuFile (bucket, qiniukey, localfile);
+
+				ResumbleUploadEx puttedCtx = new ResumbleUploadEx (localfile); //续传
+
 				ManualResetEvent done = new ManualResetEvent (false);
-				//上传完成事件
 				qfile.UploadCompleted += (sender, e) => {
-					Console.WriteLine (e.RawString);
+					Console.WriteLine (e.key);
+					Console.WriteLine (e.Hash);
 					done.Set ();
 				};
-				//上传失败事件
 				qfile.UploadFailed += (sender, e) => {
 					Console.WriteLine (e.Error.ToString ());
+					puttedCtx.Save();
 					done.Set ();
 				};
-				//上传进度事件，可用于百分比进度显示，网速计算
 				qfile.UploadProgressChanged += (sender, e) => {
 					int percentage = (int)(100 * e.BytesSent / e.TotalBytes);
 					Console.Write (percentage);
 				};
-				// 上传为异步操作
-				// 上传本地文件到七牛云存储
+				qfile.UploadBlockCompleted += (sender, e) => {
+					//上传结果持久化
+					puttedCtx.Add(e.Index,e.Ctx);
+					puttedCtx.Save();
+				};
+				qfile.UploadBlockFailed += (sender, e) => {
+					//
+				};
+
+				//上传为异步操作
+				//上传本地文件到七牛云存储
 				qfile.Upload ();
+				
+				//如果要续传，调用下面的方法
+				//qfile.Upload (puttedCtx.PuttedCtx);
+
 				done.WaitOne ();
 			}
 
@@ -113,11 +139,12 @@ namespace demo
 			{
 
 				try {
-					QiniuFile qfile = new QiniuFile ("<input your bucket Name>", "<input qiniu file key>");
+					QiniuFile qfile = new QiniuFile (bucket, qiniukey);
 					QiniuFileInfo finfo = qfile.Stat ();
 					if (finfo != null) {
+						qfile.Move("cloudcomment","movetest");
 						//删除七牛云空间的文件
-						qfile.Delete ();
+						//qfile.Delete ();
 					}
 				} catch (QiniuWebException e) {
 					Console.WriteLine (e.Error.HttpCode);
@@ -127,6 +154,7 @@ namespace demo
 		}	
 	}	
 }
+
 ```
 
 <a id="issue"></a>
