@@ -47,6 +47,7 @@
     <Compile Include="QiniuEventArgs.cs" />
     <Compile Include="QiniuPutPolicy.cs" />
     <Compile Include="QiniuMAC.cs" />
+    <Compile Include="QiniuResumbleUploadEx.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

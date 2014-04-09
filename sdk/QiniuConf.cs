@@ -44,13 +44,8 @@ namespace qiniu
 		/// </summary>
 		public static void InitFromAppConfig()
 		{
-			USER_AGENT = System.Configuration.ConfigurationManager.AppSettings["USER_AGENT"];
 			ACCESS_KEY = System.Configuration.ConfigurationManager.AppSettings["ACCESS_KEY"];
 			SECRET_KEY = System.Configuration.ConfigurationManager.AppSettings["SECRET_KEY"];
-			RS_HOST = System.Configuration.ConfigurationManager.AppSettings["RS_HOST"];
-			UP_HOST = System.Configuration.ConfigurationManager.AppSettings["UP_HOST"];
-			RSF_HOST = System.Configuration.ConfigurationManager.AppSettings["RSF_HOST"];
-			PREFETCH_HOST = System.Configuration.ConfigurationManager.AppSettings["PREFETCH_HOST"];
 		}
 	}
 }

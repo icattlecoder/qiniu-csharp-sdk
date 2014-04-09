@@ -155,7 +155,34 @@ namespace qiniu
 			} catch (Exception e) {
 				throw e;
 			}
-		}	
+		}
+
+		/// <summary>
+		/// Move the specified destBucket, destKey and mac.
+		/// </summary>
+		/// <param name="destBucket">Destination bucket.</param>
+		/// <param name="destKey">Destination key.</param>
+		/// <param name="mac">Mac.</param>
+		public bool Move(string destBucket,string destKey,MAC mac=null){
+			if (mac == null) {
+				mac = new MAC ();
+			}
+			string url = string.Format ("{0}/{1}/{2}/{3}",
+				Config.RS_HOST,
+				"move",
+				Base64URLSafe.Encode (this.bucketName+":"+this.key),
+				Base64URLSafe.Encode (destBucket+":"+destKey));
+			try {
+				using (QiniuWebClient client = new QiniuWebClient ()) {
+					client.Call (url, mac);
+					return true;
+				}
+			} catch (WebException e) {
+				throw new QiniuWebException(e);
+			} catch (Exception e) {
+				throw e;
+			}
+		}
 
 		/// <summary>
 		/// Asyncs the upload.
@@ -242,6 +269,7 @@ namespace qiniu
 					for (int i = 0; i < blockcount; i++) {
 						if (puttedBlk!=null&&i< puttedBlk.Length) {
 							blkRets[i] = puttedBlk[i];
+							totalSent +=(long)blkRets[i].offset;
 							continue;
 						}
 						if (i == blockcount - 1) {
@@ -346,8 +374,6 @@ namespace qiniu
 			return policy.Token ();
 		}
 		#endregion
-
-	
 	}
 
 	[JsonObject(MemberSerialization.OptIn)]

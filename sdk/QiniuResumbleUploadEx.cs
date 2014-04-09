@@ -1,13 +1,15 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.IO;
-using System.IO.Compression;
-using qiniu;
-namespace demo
+using System.Text;
+using System.Security.Cryptography;
+using System.Collections.Generic;
+
+namespace qiniu
 {
-	public class ResumbalePutEx
+	/// <summary>
+	/// 断点续传.
+	/// </summary>
+	public class ResumbleUploadEx
 	{
 		private string puttedCtxDir;
 		private string fileName;
@@ -15,7 +17,7 @@ namespace demo
 		private Dictionary<int,BlkputRet> puttedCtx;
 
 		/// <summary>
-		/// Gets the putted context.
+		/// 获取已上传的结果.
 		/// </summary>
 		/// <value>The putted context.</value>
 		public BlkputRet[] PuttedCtx {
@@ -27,7 +29,7 @@ namespace demo
 					if (this.puttedCtx.ContainsKey (i)) {
 						result [i] = this.puttedCtx [i];
 					} else {
-						this.Delete ();
+						this.Clear ();
 						return null;
 					}
 				}
@@ -39,8 +41,8 @@ namespace demo
 		/// Initializes a new instance of the <see cref="demo.ResumbalePutEx"/> class.
 		/// </summary>
 		/// <param name="filename">Filename.</param>
-		/// <param name="puttedCtxDir">Putted context dir.default set to System TempPath</param>
-		public ResumbalePutEx (string filename, string puttedCtxDir=null){
+		/// <param name="puttedCtxDir">断点续传上传结果持久化存放目录. 默认存放在系统临时文件夹。</param>
+		public ResumbleUploadEx (string filename, string puttedCtxDir=null){
 			if (!File.Exists (filename)) {
 				throw new Exception(string.Format("{0} does not exist", filename));
 			}
@@ -79,7 +81,7 @@ namespace demo
 		}
 
 		/// <summary>
-		/// Save this putted result to disk file.
+		/// 保存持久化结果至磁盘文件
 		/// </summary>
 		public void Save(){
 			StringBuilder sb = new StringBuilder ();
@@ -91,7 +93,7 @@ namespace demo
 		}
 
 		/// <summary>
-		/// 
+		/// 保存持久化结果至内存
 		/// </summary>
 		/// <param name="tempFileName"></param>
 		/// <param name="idx"></param>
@@ -102,7 +104,7 @@ namespace demo
 		}
 
 		/// <summary>
-		/// Adds the and sync.
+		/// 保存持久化结果至内存和文件.
 		/// </summary>
 		/// <param name="idx">Index.</param>
 		/// <param name="ret">Ret.</param>
@@ -112,9 +114,9 @@ namespace demo
 		}
 
 		/// <summary>
-		/// Delete this instance.
+		/// 清除上传持久化结果
 		/// </summary>
-		public void Delete(){
+		public void Clear(){
 			if (File.Exists (this.puttedCtxFileName)) {
 				this.puttedCtx.Clear ();
 				File.Delete (this.puttedCtxFileName);
@@ -137,5 +139,4 @@ namespace demo
 		}
 	}
 }
-
 
