@@ -278,7 +278,7 @@ namespace qiniu
 						}
 						fs.Seek ((long)i * BLOCKSIZE, SeekOrigin.Begin);
 						fs.Read (buf, 0, readLen);
-						using (QiniuWebClient client = new QiniuWebClient (10000.0)) {
+						using (QiniuWebClient client = new QiniuWebClient ()) {
 							bool failed = false;
 							client.UploadDataCompleted += (sender, e) => {
 								if (e.Error != null) {
