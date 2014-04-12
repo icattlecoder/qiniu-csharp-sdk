@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Timers;
+using System.Threading;
 using System.IO;
 using System.Collections.Specialized;
 using System.Net;
@@ -7,6 +9,23 @@ namespace qiniu
 {
 	public class QiniuWebClient:WebClient
 	{
+		public event EventHandler<EventArgs> Timeout;
+		/// <summary>
+		/// Ons the timeout.
+		/// </summary>
+		protected virtual void onTimeout(){
+			if (this.Timeout != null) {
+				this.Timeout (this,new EventArgs());
+			}
+		}
+
+		private bool isUploading = true;
+		private object isUploadinglocker = new object ();
+
+		ManualResetEvent done = new ManualResetEvent (false);
+
+		System.Timers.Timer timer;
+
 		private string uptoken;
 
 		/// <summary>
@@ -14,13 +33,31 @@ namespace qiniu
 		/// </summary>
 		/// <value>Up token.</value>
 		public string UpToken {
-			get {
-				return uptoken;
-			}
+			get { return uptoken; }
 			set {
 				uptoken = value;
 				this.Headers.Add ("Authorization", "UpToken " + this.uptoken);
 			}	
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="qiniu.QiniuWebClient"/> class.
+		/// </summary>
+		/// <param name="timeout">Timeout.</param>
+		public QiniuWebClient(double timeout = 100000.0){
+
+			this.timer = new System.Timers.Timer (timeout);
+			this.timer.Elapsed+= (object sender, ElapsedEventArgs e) => {
+				if(!isUploading){
+					onTimeout();
+					this.timer.Stop();
+					done.Set();
+					return;
+				}
+				lock(isUploadinglocker){
+					isUploading = false;
+				}
+			};
 		}
 
 		/// <summary>
@@ -79,6 +116,35 @@ namespace qiniu
 				throw e;
 			}
 		}
+
+		protected override void OnUploadDataCompleted (UploadDataCompletedEventArgs e)
+		{
+			base.OnUploadDataCompleted (e);
+			done.Set ();
+		}
+
+		protected override void OnUploadProgressChanged (UploadProgressChangedEventArgs e)
+		{
+			lock (isUploadinglocker) {
+				isUploading = true;
+			}
+			base.OnUploadProgressChanged (e);
+		}
+
+		/// <summary>
+		/// Is the upload data async.
+		/// </summary>
+		/// <returns>The upload data async.</returns>
+		/// <param name="url">URL.</param>
+		/// <param name="data">Data.</param>
+		public void iUploadDataAsync(string url,string method,byte[] data){
+		
+			this.UploadDataAsync (new Uri (url),method, data);
+			this.timer.Start ();
+			done.WaitOne ();
+			return;
+		}
+
 
 		private Stream GetPostStream (Stream putStream, string fileName, NameValueCollection formData, string boundary)
 		{

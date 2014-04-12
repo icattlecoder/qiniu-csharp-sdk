@@ -59,6 +59,7 @@ namespace qiniu
 			this.puttedCtxFileName = Path.Combine (this.puttedCtxDir, ctxfile);
 			if (!File.Exists (this.puttedCtxFileName)) {
 				File.Open (this.puttedCtxFileName, FileMode.Create);
+				this.puttedCtx = new Dictionary<int, BlkputRet> ();
 			} else {
 				this.puttedCtx = initloadPuttedCtx ();
 			}

@@ -278,26 +278,32 @@ namespace qiniu
 						}
 						fs.Seek ((long)i * BLOCKSIZE, SeekOrigin.Begin);
 						fs.Read (buf, 0, readLen);
-						using (QiniuWebClient client = new QiniuWebClient ()) {
-							ManualResetEvent done = new ManualResetEvent (false);
+						using (QiniuWebClient client = new QiniuWebClient (10000.0)) {
+							bool failed = false;
 							client.UploadDataCompleted += (sender, e) => {
 								if (e.Error != null) {
 									onQiniuUploadBlockFailed (new QiniuUploadBlockFailedEventArgs (i, e.Error));
+									failed =true;
 									return;
 								} else {
 									blkRets [i] = GetBlkPutRet (e.Result);
 									onQiniuUploadBlockCompleted (new QiniuUploadBlockCompletedEventArgs (i, blkRets [i]));
 								}
-								done.Set ();
 							};
 							client.UploadProgressChanged += (sender, e) => {
 								onQiniuUploadProgressChanged (new QiniuUploadProgressChangedEventArgs (totalSent + e.BytesReceived, finfo.Length));
 							};
+							client.Timeout+= (sender, e) => {
+								onQiniuUploadBlockFailed(new QiniuUploadBlockFailedEventArgs(i,new Exception("QiniuWebClient Timeout.")));
+								failed = true;
+							};
 							client.UpToken = token;
 							client.Headers.Add("Content-Type", "application/octet-stream");
 							string url = string.Format("{0}/mkblk/{1}", Config.UP_HOST, readLen);
-							client.UploadDataAsync (new Uri (url), "POST", buf);
-							done.WaitOne ();
+							client.iUploadDataAsync ( url, "POST", buf);
+							if(failed){
+								return;
+							}
 							totalSent += readLen;
 						}
 					}
