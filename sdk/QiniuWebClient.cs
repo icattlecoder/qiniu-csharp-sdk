@@ -50,7 +50,6 @@ namespace qiniu
 			this.timer.Elapsed+= (object sender, ElapsedEventArgs e) => {
 				if(!isUploading){
 					onTimeout();
-					this.timer.Stop();
 					done.Set();
 					return;
 				}
@@ -191,6 +190,18 @@ namespace qiniu
 		private string RandomBoundary (){
 			return String.Format ("----------{0:N}", Guid.NewGuid ());
 		}
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="disposing"></param>
+        protected override void Dispose(bool disposing)
+        {
+            if (timer.Enabled) {
+                timer.Dispose();
+            }
+            base.Dispose(disposing);
+        }
 	}
 }
 
