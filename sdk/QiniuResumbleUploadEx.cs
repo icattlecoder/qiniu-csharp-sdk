@@ -48,8 +48,13 @@ namespace qiniu
 			}
 			this.fileName = filename;
 			if (puttedCtxDir != null) {
-				if (Directory.Exists (puttedCtxDir)) {
-					throw new Exception (string.Format ("{0} does not exist", puttedCtxDir));
+				if (!Directory.Exists (puttedCtxDir)) {
+					try{
+						Directory.CreateDirectory (puttedCtxDir);
+					}
+					catch(Exception e){
+						throw e;
+					}
 				}
 				this.puttedCtxDir = puttedCtxDir;
 			} else {
