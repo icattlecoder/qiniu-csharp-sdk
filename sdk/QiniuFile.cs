@@ -291,7 +291,7 @@ namespace qiniu
 								}
 							};
 							client.UploadProgressChanged += (sender, e) => {
-								onQiniuUploadProgressChanged (new QiniuUploadProgressChangedEventArgs (totalSent + e.BytesReceived, finfo.Length));
+								onQiniuUploadProgressChanged (new QiniuUploadProgressChangedEventArgs (totalSent + e.BytesSent, finfo.Length));
 							};
 							client.Timeout+= (sender, e) => {
 								onQiniuUploadBlockFailed(new QiniuUploadBlockFailedEventArgs(i,new Exception("QiniuWebClient Timeout.")));
