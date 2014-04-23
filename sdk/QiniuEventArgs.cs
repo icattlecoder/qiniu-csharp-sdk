@@ -72,6 +72,17 @@ namespace qiniu
 				}
 			}
 		}
+
+		public QiniuUploadCompletedEventArgs(string result){
+			this.RawString = result;
+			Dictionary<string, object> dict = JsonConvert.DeserializeObject<Dictionary<string, object>> (result);
+			object tmp;
+			if (dict.TryGetValue ("hash", out tmp))
+				Hash = (string)tmp;
+			if (dict.TryGetValue ("key", out tmp))
+				key = (string)tmp;
+					
+		}	
 	}
 
 	/// <summary>

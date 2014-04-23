@@ -22,7 +22,11 @@ namespace demo
 			string localfile = "/Users/icattlecoder/Movies/tzd.rmvb";
 			string bucket = "icattlecoder";
 			string qiniukey = "tzd.rmvb";
-			
+
+			{
+				UploadBase64 ();
+			}
+
 			//======================================================================
 			{
 				QiniuFile qfile = new QiniuFile (bucket, qiniukey, localfile);
@@ -78,5 +82,29 @@ namespace demo
 				*/
 			}
 		}	
+
+		/// <summary>
+		/// Uploads the base64.
+		/// </summary>
+		public static void UploadBase64(){
+			string bucket = "icattlecoder";
+			string qiniuKey = "base64.png";
+
+			ManualResetEvent done = new ManualResetEvent (false);
+			jpegToBase64 jpeg = new jpegToBase64 ("/Users/icattlecoder/Desktop/base64.png");
+			QiniuFile qfile = new QiniuFile (bucket, qiniuKey);
+			qfile.UploadCompleted+= (sender, e) => {
+				Console.Write(e.RawString);
+				done.Set();
+
+			};
+			qfile.UploadFailed+= (sender, e) => {
+				QiniuWebException qe = (QiniuWebException)e.Error;
+				Console.WriteLine(qe.Error.ToString());
+			};
+			qfile.UploadString ((int)jpeg.Filesize, "image/png", jpeg.Base64Content);
+			done.WaitOne ();
+		}
+
 	}	
 }

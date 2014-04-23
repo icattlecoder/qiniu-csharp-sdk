@@ -185,6 +185,53 @@ namespace qiniu
 		}
 
 		/// <summary>
+		/// Uploads the string.
+		/// </summary>
+		/// <param name="base64Content">Base64 content.</param>
+		public void UploadString(int filesize,string mimeType,string base64Content){
+			string token = getDefalutToken (this.bucketName, this.key);
+			UploadString (token, filesize, mimeType, base64Content);
+		}
+
+		/// <summary>
+		/// Uploads the string.
+		/// </summary>
+		/// <param name="token">Token.</param>
+		/// <param name="base64Content">Base64 content.</param>
+		public void UploadString(string token,int fileSize,string mimeType,string base64Content){
+			using (QiniuWebClient qwc = new QiniuWebClient ()) {
+				qwc.UpToken = token;
+				string url = Config.UP_HOST +
+					string.Format("/putb64/{0}/key/{1}/mimeType/{2}",
+						fileSize,
+						Base64URLSafe.Encode(this.key),
+						Base64URLSafe.Encode(mimeType));
+
+				qwc.UploadStringCompleted += (sender, e) => {
+					if (e.Error != null && e.Error is WebException) {
+						if (e.Error is WebException) {
+							QiniuWebException qwe = new QiniuWebException (e.Error as WebException);
+							onUploadFailed (new QiniuUploadFailedEventArgs (qwe));
+						} else {	
+							onUploadFailed (new QiniuUploadFailedEventArgs (e.Error));
+						}
+					} else {
+						onQiniuUploadCompleted(new QiniuUploadCompletedEventArgs(e.Result));
+
+						onQiniuUploadCompleted (new QiniuUploadCompletedEventArgs (e.Result));
+					}
+				};	
+			
+				qwc.UploadProgressChanged += (sender, e) => {
+					onQiniuUploadProgressChanged (new QiniuUploadProgressChangedEventArgs (e.BytesSent, e.TotalBytesToSend));
+				};
+
+				qwc.Headers.Add("Content-Type", "application/octet-stream");
+				qwc.UploadStringAsync (new Uri (url), "POST", base64Content);
+			}
+		}	
+
+		/// <summary>
 		/// Asyncs the upload.
 		/// </summary>
 		public void Upload(BlkputRet[] blkRets=null){
